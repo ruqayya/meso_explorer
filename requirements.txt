@@ -1,0 +1,21 @@
+numpy>=1.26,<2
+pandas>=2.2,<3
+Pillow>=10
+opencv-python-headless>=4.10,<4.12
+scipy>=1.13
+scikit-image>=0.24,<0.26
+scikit-learn>=1.5
+umap-learn>=0.5.7
+matplotlib>=3.9
+seaborn>=0.13
+tqdm>=4.66
+safetensors>=0.5
+huggingface-hub>=0.28
+python-dotenv>=1
+einops>=0.8
+psutil>=6
+pycocotools>=2.0.10
+setuptools>=69,<81
+triton-windows; sys_platform == "win32"
+triton; sys_platform == "linux"
+sam3 @ git+https://github.com/facebookresearch/sam3.git@2345a4ad109ac29c569da749c91d84f10dc08c40
