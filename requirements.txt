@@ -3,6 +3,7 @@ pandas>=2.2,<3
 Pillow>=10
 opencv-python-headless>=4.10,<4.12
 scipy>=1.13
+statsmodels>=0.14,<0.15
 scikit-image>=0.24,<0.26
 scikit-learn>=1.5
 umap-learn>=0.5.7

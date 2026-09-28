@@ -66,3 +66,9 @@ def metadata(rel):
         if subtype != "unknown"
         else "unknown",
     }
+
+def ensure_dir(path: Path) -> Path:
+    """Ensures a directory exists, creating parent directories if necessary."""
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
