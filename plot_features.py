@@ -11,6 +11,20 @@ from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pandas as pd
 
+# Exclude cell lines containing any of these strings (case-insensitive).
+# Spaces and underscores are treated alike. Use [] to exclude none.
+EXCLUDED_CELL_LINE_STRINGS = [
+    "mesothelioma_patient",
+    "a549",
+    "h266",
+    # "biphasic",
+    # "epithelioid",
+    # "msto"
+]
+
+# Square-root scaling makes low-count bars easier to see; use "linear" for raw heights.
+Y_AXIS_SCALE = "sqrt"
+
 FEATURE_LABELS = {
     "area": "Area (pixels²)",
     "solidity": "Solidity",
@@ -40,10 +54,11 @@ def plot_distributions(frame, out_dir, bins=25, include_flagged=False, group_by=
     cell_line_names = frame.cell_line.fillna("").astype(str).str.lower().str.replace(
         r"[\s_]+", "_", regex=True
     )
-    excluded = (
-        cell_line_names.str.contains("mesothelioma_patient", regex=False)
-        | cell_line_names.str.contains("a549", regex=False)
-    )
+    excluded = pd.Series(False, index=frame.index)
+    for text in EXCLUDED_CELL_LINE_STRINGS:
+        normalized = "_".join(text.lower().replace("_", " ").split())
+        if normalized:
+            excluded |= cell_line_names.str.contains(normalized, regex=False)
     frame = frame.loc[~excluded].copy()
     if "feature_status" in frame:
         frame = frame.loc[frame.feature_status == "ok"].copy()
@@ -77,6 +92,9 @@ def plot_distributions(frame, out_dir, bins=25, include_flagged=False, group_by=
         else:
             epithelioid = "epithelioid" in group.lower()
         group_colors[group] = "#397da8" if epithelioid else "#d97732"
+    # Keep epithelioid rows together, followed by all other cell lines.
+    # The existing alphabetical order is preserved within each category.
+    groups.sort(key=lambda group: group_colors[group] != "#397da8")
     fig, axes = plt.subplots(
         len(groups), 4,
         figsize=(18, 3 * len(groups)),
@@ -102,7 +120,16 @@ def plot_distributions(frame, out_dir, bins=25, include_flagged=False, group_by=
                 ax.plot([], [], color=color, label=f"{group.title()}: no valid values")
             ax.set_title(f"{group}\nn = {len(values)}", fontsize=10)
             ax.set_xlabel(label)
-            ax.set_ylabel("Cell count")
+            if Y_AXIS_SCALE == "sqrt":
+                ax.set_yscale("function", functions=(
+                    lambda values: np.sqrt(np.maximum(values, 0)),
+                    lambda values: np.square(values),
+                ))
+                ax.set_ylabel("Cell count (square-root scale)")
+            elif Y_AXIS_SCALE == "linear":
+                ax.set_ylabel("Cell count")
+            else:
+                raise ValueError('Y_AXIS_SCALE must be sqrt or linear')
             ax.yaxis.set_major_locator(MaxNLocator(integer=True))
             ax.tick_params(axis="x", labelbottom=True)
             if edges is not None:
